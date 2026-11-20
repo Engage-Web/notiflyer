@@ -4,7 +4,7 @@ Plugin Name: Notiflyer
 Plugin URI: http://www.engageweb.co.uk/notiflyer-wordpress-plugin-6954.html 
 Description: Add custom messages to comment notification emails.
 Author: Engage Web - Steven Morris
-Version: 1.3
+Version: 1.3.1
 Author URI: http://www.engageweb.co.uk/about-us/meet-the-team#Steven
 License: GPL2
 Text Domain: notiflyer
