@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== Notiflyer ===
 Contributors: StuckOn_dev
 Tags: author, notficiation, comment feedback
 Requires at least: 3.5.1

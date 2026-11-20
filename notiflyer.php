@@ -4,10 +4,15 @@ Plugin Name: Notiflyer
 Plugin URI: http://www.engageweb.co.uk/notiflyer-wordpress-plugin-6954.html 
 Description: Add custom messages to comment notification emails.
 Author: Engage Web - Steven Morris
-Version: 1.0
+Version: 1.3
 Author URI: http://www.engageweb.co.uk/about-us/meet-the-team#Steven
 License: GPL2
+Text Domain: notiflyer
 */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 
 //Add the Menu options
@@ -16,12 +21,12 @@ License: GPL2
 if ( is_admin() )
 { // admin actions
 				add_action('admin_menu', 'notiflyer_menu');
-				add_action( 'admin_init', 'register_notiflyer_settings' );
+				add_action( 'admin_init', 'notiflyer_register_settings' );
 }
 
-function register_notiflyer_settings()
+function notiflyer_register_settings()
 { // whitelist options
-				register_setting( 'notiflyer_options', 'notiflyer_email_insert' );
+				register_setting( 'notiflyer_options', 'notiflyer_email_insert', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
 }
 
 
@@ -40,8 +45,8 @@ function notiflyer_options()
 				echo '<th style="width:50%;"><h3>Current Text</h3></th><th style="width:50%;"><h3>New Text</h3></th>';
 				echo '</tr>';
 				echo '<tr valign="top">';
-				echo '<td><p>' . get_option('notiflyer_email_insert') . '</p></td>';	
-				echo '<td><textarea type="text" name="notiflyer_email_insert" rows="10" style="width:100%"/>' . get_option('notiflyer_email_insert') . '</textarea></td>';
+				echo '<td><p>' . esc_html( get_option( 'notiflyer_email_insert' ) ) . '</p></td>';	
+				echo '<td><textarea name="notiflyer_email_insert" rows="10" style="width:100%">' . esc_textarea( get_option( 'notiflyer_email_insert' ) ) . '</textarea></td>';
 				echo '</tr>';
 				echo '<tr><td></td><td>';
 				echo '<input type="submit" class="button-primary" value="Save Changes" />';
@@ -74,31 +79,42 @@ function wp_notify_postauthor($comment_id, $comment_type='') {
 				if ( empty( $comment_type ) ) $comment_type = 'comment';
 			
 				if ('comment' == $comment_type) {
-								$notify_message  = sprintf( __('New comment on your post #%1$s "%2$s"'), $comment->comment_post_ID, $post->post_title ) . "\r\n";
-								$notify_message .= sprintf( __('Author : %1$s'), $comment->comment_author ) . "\r\n";
-								$notify_message .= __('Comment: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
-								$notify_message .= __('You can see all comments on this post here: ') . "\r\n";
+								/* translators: 1: Post ID, 2: Post title. */
+								$notify_message  = sprintf( __( 'New comment on your post #%1$s "%2$s"', 'notiflyer' ), $comment->comment_post_ID, $post->post_title ) . "\r\n";
+								/* translators: %s: Comment author name. */
+								$notify_message .= sprintf( __( 'Author : %1$s', 'notiflyer' ), $comment->comment_author ) . "\r\n";
+								$notify_message .= __( 'Comment: ', 'notiflyer' ) . "\r\n" . $comment->comment_content . "\r\n\r\n";
+								$notify_message .= __( 'You can see all comments on this post here: ', 'notiflyer' ) . "\r\n";
 								$notify_message .= get_permalink($comment->comment_post_ID) . "#comments\r\n\r\n";		
 								$notify_message .= get_option('notiflyer_email_insert') . "\r\n\r\n ";
-								$subject = sprintf( __('[%1$s] Comment: "%2$s"'), $blogname, $post->post_title );
+								/* translators: 1: Site name, 2: Post title. */
+								$subject = sprintf( __( '[%1$s] Comment: "%2$s"', 'notiflyer' ), $blogname, $post->post_title );
 				} elseif ('trackback' == $comment_type) {
-								$notify_message  = sprintf( __('New trackback on your post #%1$s "%2$s"'), $comment->comment_post_ID, $post->post_title ) . "\r\n";
-								$notify_message .= sprintf( __('Website: %1$s'), $comment->comment_author ) . "\r\n";
-								$notify_message .= __('Excerpt: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
-								$notify_message .= __('You can see all trackbacks on this post here: ') . "\r\n";
+								/* translators: 1: Post ID, 2: Post title. */
+								$notify_message  = sprintf( __( 'New trackback on your post #%1$s "%2$s"', 'notiflyer' ), $comment->comment_post_ID, $post->post_title ) . "\r\n";
+								/* translators: %s: Trackback source website. */
+								$notify_message .= sprintf( __( 'Website: %1$s', 'notiflyer' ), $comment->comment_author ) . "\r\n";
+								$notify_message .= __( 'Excerpt: ', 'notiflyer' ) . "\r\n" . $comment->comment_content . "\r\n\r\n";
+								$notify_message .= __( 'You can see all trackbacks on this post here: ', 'notiflyer' ) . "\r\n";
 								$notify_message .= get_permalink($comment->comment_post_ID) . "#comments\r\n\r\n";		
-								$subject = sprintf( __('[%1$s] Trackback: "%2$s"'), $blogname, $post->post_title );
+								/* translators: 1: Site name, 2: Post title. */
+								$subject = sprintf( __( '[%1$s] Trackback: "%2$s"', 'notiflyer' ), $blogname, $post->post_title );
 				} elseif ('pingback' == $comment_type) {
-								$notify_message  = sprintf( __('New pingback on your post #%1$s "%2$s"'), $comment->comment_post_ID, $post->post_title ) . "\r\n";
-								$notify_message .= sprintf( __('Website: %1$s'), $comment->comment_author ) . "\r\n";
-								$notify_message .= __('Excerpt: ') . "\r\n" . sprintf('[...] %s [...]', $comment->comment_content ) . "\r\n\r\n";
-								$notify_message .= __('You can see all pingbacks on this post here: ') . "\r\n";
+								/* translators: 1: Post ID, 2: Post title. */
+								$notify_message  = sprintf( __( 'New pingback on your post #%1$s "%2$s"', 'notiflyer' ), $comment->comment_post_ID, $post->post_title ) . "\r\n";
+								/* translators: %s: Pingback source website. */
+								$notify_message .= sprintf( __( 'Website: %1$s', 'notiflyer' ), $comment->comment_author ) . "\r\n";
+								$notify_message .= __( 'Excerpt: ', 'notiflyer' ) . "\r\n" . sprintf('[...] %s [...]', $comment->comment_content ) . "\r\n\r\n";
+								$notify_message .= __( 'You can see all pingbacks on this post here: ', 'notiflyer' ) . "\r\n";
 								$notify_message .= get_permalink($comment->comment_post_ID) . "#comments\r\n\r\n";		
-								$subject = sprintf( __('[%1$s] Pingback: "%2$s"'), $blogname, $post->post_title );
+								/* translators: 1: Site name, 2: Post title. */
+								$subject = sprintf( __( '[%1$s] Pingback: "%2$s"', 'notiflyer' ), $blogname, $post->post_title );
 				}
 			
 			
-				$wp_email = 'wordpress@' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
+				$admin_email = sanitize_email( get_option( 'admin_email' ) );
+				$email_domain = substr( strrchr( $admin_email, '@' ), 1 );
+				$wp_email = 'wordpress@' . strtolower( $email_domain );
 			
 				if ( '' == $comment->comment_author ) {
 								$from = "From: \"$blogname\" <$wp_email>";
